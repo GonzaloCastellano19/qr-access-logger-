@@ -221,6 +221,21 @@
     .status-box.err   { border-color: var(--red);   color: var(--red);   background: rgba(244,63,94,.06); }
     .status-box.warn  { border-color: #fbbf24;      color: #fbbf24;      background: rgba(251,191,36,.06); }
 
+    /* ── HOURS MESSAGE BOX ── */
+    .hours-msg-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 24px;
+      font-size: 13px;
+      text-align: center;
+      min-width: 300px;
+      max-width: 480px;
+      line-height: 1.6;
+      transition: all .3s;
+      display: none;
+    }
+
     /* ── ADMIN PANEL ── */
     .admin-panel {
       background: var(--surface);
@@ -331,6 +346,7 @@
   <div class="status-box" id="statusBox">
     Pulsa ENTRADA o SALIDA para registrar tu fichaje
   </div>
+  <div class="hours-msg-box" id="hoursMsgBox"></div>
 
   <!-- SCANNER QR (para fichar empleados desde kiosco) -->
   <div class="scanner-section">
@@ -393,6 +409,14 @@
         rolTag.textContent = 'Empleado';
         rolTag.className   = 'rol-tag rol-emp';
       }
+
+      if (!sessionData.qr_token) {
+        document.getElementById('btnEntrada').disabled = true;
+        document.getElementById('btnSalida').disabled = true;
+        const status = document.getElementById('statusBox');
+        status.className = 'status-box warn';
+        status.textContent = 'Usuario sin empleado vinculado. Escanea un QR o pide al administrador que vincule tu usuario.';
+      }
     } catch(_) {
       window.location.href = '/login';
     }
@@ -403,6 +427,12 @@
     const btnE   = document.getElementById('btnEntrada');
     const btnS   = document.getElementById('btnSalida');
     const status = document.getElementById('statusBox');
+
+    if (!sessionData?.qr_token) {
+      status.className = 'status-box warn';
+      status.textContent = 'Usuario sin empleado vinculado. Pide al administrador que vincule tu usuario.';
+      return;
+    }
 
     btnE.disabled = btnS.disabled = true;
     status.className   = 'status-box';
@@ -428,16 +458,17 @@
       const data = await res.json();
 
       if (res.ok) {
-        const isIn = (data.direction === 'IN' && tipo === 'entrada') || tipo === 'entrada';
+        const isIn = data.direction === 'IN';
         status.className   = 'status-box ok';
-        status.textContent = `${tipo === 'entrada' ? '✅ ENTRADA' : '🚪 SALIDA'} registrada · ${now.toLocaleTimeString('es-ES')}`;
+        status.textContent = `${isIn ? '✅ ENTRADA' : '🚪 SALIDA'} registrada · ${now.toLocaleTimeString('es-ES')}`;
       } else if (res.status === 429) {
         status.className   = 'status-box warn';
         status.textContent = '⚠️ Fichaje duplicado — espera unos segundos';
       } else {
-        // Sin token de empleado asignado — confirmación visual únicamente
-        status.className   = 'status-box ok';
-        status.textContent = `${tipo === 'entrada' ? '✅ ENTRADA' : '🚪 SALIDA'} registrada · ${now.toLocaleTimeString('es-ES')}`;
+        // Error real al registrar el fichaje — mostrar el mensaje del servidor
+        status.className   = 'status-box err';
+        const errMsg = data?.error || 'Error al registrar el fichaje. Consulta al administrador.';
+        status.textContent = '❌ ' + errMsg;
       }
     } catch(_) {
       status.className   = 'status-box err';
@@ -458,9 +489,11 @@
   async function processToken(token) {
     if (!token) return;
     scanning = false;
-    const status = document.getElementById('statusBox');
+    const status  = document.getElementById('statusBox');
+    const msgBox  = document.getElementById('hoursMsgBox');
     status.className   = 'status-box';
     status.textContent = '⏳ Procesando QR...';
+    msgBox.style.display = 'none';
 
     try {
       const res  = await fetch('/api/checkin', {
@@ -474,6 +507,26 @@
         const isIn = data.direction === 'IN';
         status.className   = 'status-box ok';
         status.textContent = `${isIn ? '✅ ENTRADA' : '🚪 SALIDA'} · ${data.employee} · ${data.timestamp}`;
+
+        if (data.hours_summary) {
+          const hs   = data.hours_summary;
+          const diff = hs.difference;
+          msgBox.textContent   = hs.message;
+          msgBox.style.display = 'block';
+          if (diff >= 0) {
+            msgBox.style.borderColor = 'var(--green)';
+            msgBox.style.color       = 'var(--green)';
+            msgBox.style.background  = 'rgba(34,197,94,.06)';
+          } else if (diff > -10) {
+            msgBox.style.borderColor = '#fbbf24';
+            msgBox.style.color       = '#fbbf24';
+            msgBox.style.background  = 'rgba(251,191,36,.06)';
+          } else {
+            msgBox.style.borderColor = 'var(--red)';
+            msgBox.style.color       = 'var(--red)';
+            msgBox.style.background  = 'rgba(244,63,94,.06)';
+          }
+        }
       } else {
         status.className   = 'status-box err';
         status.textContent = `❌ ${data.error || 'Error desconocido'}`;
@@ -484,10 +537,11 @@
     }
 
     setTimeout(() => {
-      status.className   = 'status-box';
-      status.textContent = 'Pulsa ENTRADA o SALIDA para registrar tu fichaje';
+      status.className     = 'status-box';
+      status.textContent   = 'Pulsa ENTRADA o SALIDA para registrar tu fichaje';
+      msgBox.style.display = 'none';
       scanning = true;
-    }, 3000);
+    }, 5000);
   }
 
   async function startCamera() {
