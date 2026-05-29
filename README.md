@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # QRAccess — Sistema de Fichaje por Código QR
 
 Guía completa para empresas que deseen implantar el sistema de control de presencia QRAccess.
@@ -12,19 +13,18 @@ Guía completa para empresas que deseen implantar el sistema de control de prese
 4. [Instalación](#instalación)
    - [Backend Python (recomendado)](#backend-python-recomendado)
    - [Backend Node.js (alternativo)](#backend-nodejs-alternativo)
-5. [Uso en local](#uso-en-local)
-6. [Configuración inicial](#configuración-inicial)
-7. [Uso del sistema](#uso-del-sistema)
+5. [Configuración inicial](#configuración-inicial)
+6. [Uso del sistema](#uso-del-sistema)
    - [Panel de administración](#panel-de-administración)
    - [Gestión de empleados](#gestión-de-empleados)
    - [Kiosco de fichaje](#kiosco-de-fichaje)
    - [Consulta de registros](#consulta-de-registros)
    - [Exportar a CSV](#exportar-a-csv)
-8. [API REST](#api-rest)
-9. [Seguridad](#seguridad)
-10. [Despliegue en producción](#despliegue-en-producción)
-11. [Preguntas frecuentes](#preguntas-frecuentes)
-12. [Soporte](#soporte)
+7. [API REST](#api-rest)
+8. [Seguridad](#seguridad)
+9. [Despliegue en producción](#despliegue-en-producción)
+10. [Preguntas frecuentes](#preguntas-frecuentes)
+11. [Soporte](#soporte)
 
 ---
 
@@ -106,10 +106,9 @@ El sistema se compone de tres capas:
 |---|---|
 | `fichaje_qr/` | Backend principal (Python/Flask) con base de datos SQLite |
 | `backend/` | Backend alternativo (Node.js/Express) con autenticación JWT |
-| `qraccess/` | Versión anterior del backend Node.js (referencia) |
-| `index.html` | Pantalla de login del panel web |
-| `admin.html` | Panel de administración |
-| `dashboard.html` | Vista de fichajes del panel web |
+| `index.html` | Pantalla de login del panel web publicada en GitHub Pages |
+| `admin.html` | Panel de administración compartido entre GitHub Pages y pruebas locales |
+| `dashboard.html` | Vista de fichajes compartida entre GitHub Pages y pruebas locales |
 
 ---
 
@@ -122,8 +121,8 @@ Este es el backend más completo y el que se recomienda para producción.
 **Paso 1: Descargar el proyecto**
 
 ```bash
-git clone https://github.com/aguillenvictoria/qr-access-logger.git
-cd qr-access-logger/fichaje_qr
+git clone https://github.com/ErBala3/pruebas.git
+cd pruebas/fichaje_qr
 ```
 
 O descargue el ZIP desde la página del repositorio y descomprima la carpeta `fichaje_qr`.
@@ -170,6 +169,7 @@ El servidor se inicia en `http://localhost:5000`. La base de datos `fichaje.db` 
 
 - Panel de administración: `http://localhost:5000/admin`
 - Kiosco de fichaje: `http://localhost:5000/`
+- Frontend estilo GitHub Pages: `http://localhost:5000/index.html`
 
 ---
 
@@ -192,116 +192,6 @@ npm run dev        # desarrollo (recarga automática)
 ```
 
 El servidor se inicia en `http://localhost:3001`.
-
----
-
-## Uso en local
-
-Este proyecto tiene **tres módulos** que pueden ejecutarse de forma independiente. A continuación se explica cómo arrancar cada uno en tu máquina.
-
----
-
-### Opción A — Frontend Firebase (recomendado para empezar)
-
-Los archivos `index.html`, `admin.html` y `dashboard.html` de la raíz son una aplicación web estática que usa **Firebase Firestore** como base de datos en la nube. No necesitan servidor propio.
-
-**Pasos:**
-
-1. Clona el repositorio:
-   ```bash
-   git clone https://github.com/aguillenvictoria/qr-access-logger.git
-   cd qr-access-logger
-   ```
-
-2. Abre `index.html` directamente en tu navegador **o** usa un servidor local ligero para evitar problemas de CORS:
-   ```bash
-   # Con Python
-   python -m http.server 8080
-   # Con Node.js (npx)
-   npx serve .
-   ```
-
-3. Accede a `http://localhost:8080` en tu navegador.
-
-4. Inicia sesión con las credenciales de tu cuenta en Firebase (deben existir en la colección `usuarios` de Firestore).
-
-> **Nota:** La configuración de Firebase ya está incluida en los archivos HTML. Si deseas usar tu propio proyecto Firebase, edita el objeto `firebaseConfig` en `index.html` y `admin.html`.
-
----
-
-### Opción B — Backend Node.js (`/backend`)
-
-API REST con Node.js + Express. Los datos se guardan en memoria (sin base de datos externa).
-
-**Requisitos:** Node.js ≥ 18
-
-```bash
-# 1. Entra en la carpeta
-cd backend
-
-# 2. Instala dependencias
-npm install
-
-# 3. Copia el fichero de entorno
-cp env.example .env
-# Edita .env y cambia JWT_SECRET por una clave segura
-
-# 4. Arranca el servidor
-npm start          # producción
-npm run dev        # desarrollo con recarga automática (nodemon)
-```
-
-El servidor arranca en **http://localhost:3001**
-
-**Credenciales de prueba:**
-
-| Rol | Credencial |
-|-----|-----------|
-| Admin | usuario: `admin` / contraseña: `admin123` |
-| Kiosco | Header: `X-API-Key: terminal_key_123456` |
-
----
-
-### Opción C — Backend Python/Flask (`/fichaje_qr`)
-
-Sistema de fichaje completo con backend Flask, base de datos SQLite y escáner de cámara en el navegador.
-
-**Requisitos:** Python ≥ 3.10
-
-```bash
-# 1. Entra en la carpeta
-cd fichaje_qr
-
-# 2. Crea y activa un entorno virtual
-python -m venv venv
-source venv/bin/activate        # Linux / Mac
-venv\Scripts\activate           # Windows
-
-# 3. Instala dependencias
-pip install -r requirements.txt
-
-# 4. Arranca el servidor
-python app.py
-```
-
-El servidor arranca en **http://localhost:5000**
-
-| URL | Descripción |
-|-----|-------------|
-| `http://localhost:5000/` | Kiosco de escaneo QR |
-| `http://localhost:5000/admin` | Panel de administración |
-
----
-
-### Opción D — Backend Node.js modular (`/qraccess`)
-
-```bash
-cd qraccess
-npm install
-npm start
-```
-
-El servidor arranca en **http://localhost:3000** (o el puerto configurado en `.env`).
 
 ---
 
@@ -743,3 +633,85 @@ Antes de contactar, recoja la siguiente informacion para agilizar el soporte:
 ---
 
 *QRAccess — Sistema de Fichaje por Código QR*
+=======
+# Sistema de Fichaje con QR
+
+Sistema completo de fichaje por código QR con backend Python/Flask,
+base de datos SQLite y frontend web con escáner de cámara.
+
+## Estructura del proyecto
+
+```
+fichaje_qr/
+├── app.py                  ← Backend Flask (API + rutas)
+├── requirements.txt
+├── fichaje.db              ← Se crea automáticamente al arrancar
+├── static/
+│   └── qr_codes/           ← Imágenes QR generadas
+├── templates/
+│   ├── kiosk.html          ← Pantalla de fichaje (cámara)
+│   └── admin.html          ← Panel de administración
+└── tests/
+    └── test_fichaje.py     ← Suite de tests con pytest
+```
+
+## Instalación
+
+```bash
+# 1. Crea y activa un entorno virtual
+python -m venv venv
+source venv/bin/activate        # Linux/Mac
+venv\Scripts\activate           # Windows
+
+# 2. Instala dependencias
+pip install -r requirements.txt
+
+# 3. Arranca el servidor
+python app.py
+```
+
+## URLs
+
+| URL | Descripción |
+|-----|-------------|
+| `http://localhost:5000/` | Kiosco de escaneo QR |
+| `http://localhost:5000/admin` | Panel de administración |
+
+## API REST
+
+### Empleados
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| `POST` | `/api/employees` | Crear empleado `{"name": "..."}` |
+| `GET` | `/api/employees` | Listar todos |
+| `DELETE` | `/api/employees/<id>` | Eliminar empleado |
+| `GET` | `/api/employees/<id>/qr` | Descargar imagen QR |
+
+### Fichajes
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| `POST` | `/api/checkin` | Registrar fichaje `{"qr_token": "..."}` |
+| `GET` | `/api/checkins` | Listar fichajes `?date=YYYY-MM-DD&employee_id=1` |
+
+## Tests
+
+```bash
+pytest tests/test_fichaje.py -v
+```
+
+## Flujo de uso
+
+1. En el **panel admin**: crea un empleado → descarga su QR → imprímelo o muéstralo en móvil.
+2. En el **kiosco**: acerca el QR a la cámara → el sistema registra IN o OUT automáticamente.
+3. Consulta el historial de fichajes filtrando por fecha o empleado.
+4. Exporta a CSV desde el panel admin.
+
+## Seguridad (producción)
+
+- Añade autenticación al panel admin (Flask-Login o token fijo en cabecera).
+- Usa HTTPS (nginx + certbot).
+- Configura `SECRET_KEY` en Flask con un valor aleatorio largo.
+- Haz backup periódico de `fichaje.db`.
+>>>>>>> c2b0babde124b2c0982bce7ebd013588c75b4b1e
